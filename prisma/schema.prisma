@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model breezy_sessions {
+  id                        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  authenticatable_type      String    @db.VarChar(255)
+  authenticatable_id        BigInt    @db.UnsignedBigInt
+  panel_id                  String?   @db.VarChar(255)
+  guard                     String?   @db.VarChar(255)
+  ip_address                String?   @db.VarChar(45)
+  user_agent                String?   @db.Text
+  expires_at                DateTime? @db.Timestamp(0)
+  two_factor_secret         String?   @db.Text
+  two_factor_recovery_codes String?   @db.Text
+  two_factor_confirmed_at   DateTime? @db.Timestamp(0)
+  created_at                DateTime? @db.Timestamp(0)
+  updated_at                DateTime? @db.Timestamp(0)
+
+  @@index([authenticatable_type, authenticatable_id], map: "breezy_sessions_authenticatable_type_authenticatable_id_index")
+}
+
+model cache {
+  key        String @id @db.VarChar(255)
+  value      String @db.MediumText
+  expiration Int
+}
+
+model cache_locks {
+  key        String @id @db.VarChar(255)
+  owner      String @db.VarChar(255)
+  expiration Int
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model job_batches {
+  id             String  @id @db.VarChar(255)
+  name           String  @db.VarChar(255)
+  total_jobs     Int
+  pending_jobs   Int
+  failed_jobs    Int
+  failed_job_ids String  @db.LongText
+  options        String? @db.MediumText
+  cancelled_at   Int?
+  created_at     Int
+  finished_at    Int?
+}
+
+model jobs {
+  id           BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  queue        String @db.VarChar(255)
+  payload      String @db.LongText
+  attempts     Int    @db.UnsignedTinyInt
+  reserved_at  Int?   @db.UnsignedInt
+  available_at Int    @db.UnsignedInt
+  created_at   Int    @db.UnsignedInt
+
+  @@index([queue], map: "jobs_queue_index")
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model model_has_permissions {
+  permission_id BigInt      @db.UnsignedBigInt
+  model_type    String      @db.VarChar(255)
+  model_id      BigInt      @db.UnsignedBigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "model_has_permissions_permission_id_foreign")
+
+  @@id([permission_id, model_id, model_type])
+  @@index([model_id, model_type], map: "model_has_permissions_model_id_model_type_index")
+}
+
+model model_has_roles {
+  role_id    BigInt @db.UnsignedBigInt
+  model_type String @db.VarChar(255)
+  model_id   BigInt @db.UnsignedBigInt
+  roles      roles  @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "model_has_roles_role_id_foreign")
+
+  @@id([role_id, model_id, model_type])
+  @@index([model_id, model_type], map: "model_has_roles_model_id_model_type_index")
+}
+
+model password_reset_tokens {
+  email      String    @id @db.VarChar(255)
+  token      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+}
+
+model permissions {
+  id                    BigInt                  @id @default(autoincrement()) @db.UnsignedBigInt
+  name                  String                  @db.VarChar(255)
+  guard_name            String                  @db.VarChar(255)
+  created_at            DateTime?               @db.Timestamp(0)
+  updated_at            DateTime?               @db.Timestamp(0)
+  model_has_permissions model_has_permissions[]
+  role_has_permissions  role_has_permissions[]
+
+  @@unique([name, guard_name], map: "permissions_name_guard_name_unique")
+}
+
+model question_banks {
+  id                           BigInt                         @id @default(autoincrement()) @db.UnsignedBigInt
+  code                         String                         @db.VarChar(255)
+  question                     String                         @db.Text
+  created_at                   DateTime?                      @db.Timestamp(0)
+  updated_at                   DateTime?                      @db.Timestamp(0)
+  deleted_at                   DateTime?                      @db.Timestamp(0)
+  question_feedback            question_feedback[]
+  question_options             question_options[]
+  question_pack_question_banks question_pack_question_banks[]
+  reasons                      reasons[]
+}
+
+model question_feedback {
+  id               BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  question_bank_id BigInt         @db.UnsignedBigInt
+  score            Int
+  feedback         String         @db.Text
+  created_at       DateTime?      @db.Timestamp(0)
+  updated_at       DateTime?      @db.Timestamp(0)
+  deleted_at       DateTime?      @db.Timestamp(0)
+  question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_feedback_question_bank_id_foreign")
+
+  @@index([question_bank_id], map: "question_feedback_question_bank_id_foreign")
+}
+
+model question_options {
+  id               BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  question_bank_id BigInt         @db.UnsignedBigInt
+  label            String         @db.VarChar(255)
+  option           String         @db.Text
+  is_correct       Boolean        @default(false)
+  created_at       DateTime?      @db.Timestamp(0)
+  updated_at       DateTime?      @db.Timestamp(0)
+  deleted_at       DateTime?      @db.Timestamp(0)
+  question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_options_question_bank_id_foreign")
+
+  @@index([question_bank_id], map: "question_options_question_bank_id_foreign")
+}
+
+model question_pack_question_banks {
+  question_pack_id BigInt         @db.UnsignedBigInt
+  question_bank_id BigInt         @db.UnsignedBigInt
+  created_at       DateTime?      @db.Timestamp(0)
+  updated_at       DateTime?      @db.Timestamp(0)
+  deleted_at       DateTime?      @db.Timestamp(0)
+  question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_pack_question_banks_question_bank_id_foreign")
+  question_packs   question_packs @relation(fields: [question_pack_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_pack_question_banks_question_pack_id_foreign")
+
+  @@id([question_pack_id, question_bank_id])
+  @@index([question_bank_id], map: "question_pack_question_banks_question_bank_id_foreign")
+  @@index([question_pack_id], map: "question_pack_question_banks_question_pack_id_foreign")
+}
+
+model question_packs {
+  id                           BigInt                         @id @default(autoincrement()) @db.UnsignedBigInt
+  code                         String                         @unique(map: "question_packs_code_unique") @db.VarChar(255)
+  description                  String                         @db.Text
+  is_active                    Boolean                        @default(false)
+  created_at                   DateTime?                      @db.Timestamp(0)
+  updated_at                   DateTime?                      @db.Timestamp(0)
+  deleted_at                   DateTime?                      @db.Timestamp(0)
+  type                         String?                        @db.VarChar(255)
+  duration                     DateTime?                      @db.Time(0)
+  question_pack_question_banks question_pack_question_banks[]
+}
+
+model reasons {
+  id               BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  question_bank_id BigInt         @db.UnsignedBigInt
+  label            String         @db.VarChar(255)
+  reason           String         @db.Text
+  is_correct       Boolean        @default(false)
+  created_at       DateTime?      @db.Timestamp(0)
+  updated_at       DateTime?      @db.Timestamp(0)
+  deleted_at       DateTime?      @db.Timestamp(0)
+  question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "reasons_question_bank_id_foreign")
+
+  @@index([question_bank_id], map: "reasons_question_bank_id_foreign")
+}
+
+model role_has_permissions {
+  permission_id BigInt      @db.UnsignedBigInt
+  role_id       BigInt      @db.UnsignedBigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_permission_id_foreign")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_role_id_foreign")
+
+  @@id([permission_id, role_id])
+  @@index([role_id], map: "role_has_permissions_role_id_foreign")
+}
+
+model roles {
+  id                   BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  name                 String                 @db.VarChar(255)
+  guard_name           String                 @db.VarChar(255)
+  created_at           DateTime?              @db.Timestamp(0)
+  updated_at           DateTime?              @db.Timestamp(0)
+  model_has_roles      model_has_roles[]
+  role_has_permissions role_has_permissions[]
+
+  @@unique([name, guard_name], map: "roles_name_guard_name_unique")
+}
+
+model sessions {
+  id            String  @id @db.VarChar(255)
+  user_id       BigInt? @db.UnsignedBigInt
+  ip_address    String? @db.VarChar(45)
+  user_agent    String? @db.Text
+  payload       String  @db.LongText
+  last_activity Int
+
+  @@index([last_activity], map: "sessions_last_activity_index")
+  @@index([user_id], map: "sessions_user_id_index")
+}
+
+model users {
+  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  public_id         String?   @db.VarChar(255)
+  name              String    @db.VarChar(255)
+  email             String    @unique(map: "users_email_unique") @db.VarChar(255)
+  email_verified_at DateTime? @db.Timestamp(0)
+  password          String    @db.VarChar(255)
+  remember_token    String?   @db.VarChar(100)
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+  theme             String?   @default("default") @db.VarChar(255)
+  theme_color       String?   @db.VarChar(255)
+}
