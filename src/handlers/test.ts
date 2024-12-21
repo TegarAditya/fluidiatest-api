@@ -21,7 +21,18 @@ export const getTests = factory.createHandlers(async (c) => {
     return c.json({ message: "No tests found" }, 404)
   }
 
-  return c.json(tests, 200)
+  const result = tests.map((test) => {
+    return {
+      id: Number(test.id),
+      code: test.code,
+      description: test.description,
+      isActive: test.is_active,
+      type: test.type,
+      duration: test.duration,
+    }
+  })
+
+  return c.json(result, 200)
 })
 
 export const getTest = factory.createHandlers(async (c) => {
