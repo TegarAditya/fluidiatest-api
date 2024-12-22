@@ -7,6 +7,8 @@ import { serveStatic } from "hono/bun"
 import api from "./routes/api"
 import healthcheck from "./routes/healthcheck"
 
+const port = process.env.PORT || 3000
+
 const app = new Hono()
 
 app.use(logger()).use(cors()).use(secureHeaders()).use(trimTrailingSlash())
@@ -14,9 +16,11 @@ app.use(logger()).use(cors()).use(secureHeaders()).use(trimTrailingSlash())
 app.use("/*", serveStatic({ root: "./static/" }))
 
 app.route("/api", api)
-app.route("healthcheck", healthcheck)
+app.route("/healthcheck", healthcheck)
+
+console.log(`Server running on port ${port}`)
 
 export default {
-  port: process.env.PORT || 3000,
+  port: port,
   fetch: app.fetch,
 }
