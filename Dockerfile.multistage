@@ -9,7 +9,7 @@ RUN bun install --frozen-lockfile
 
 RUN bunx prisma generate
 
-RUN bun build --compile --minify --bytecode ./src/index.ts --outfile ./dist/compiled/main
+RUN bun build --compile --minify --bytecode --sourcemap ./src/index.ts --outfile ./dist/compiled/main
 
 # Stage 2
 FROM busybox:uclibc AS wget
