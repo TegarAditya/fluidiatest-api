@@ -8,6 +8,8 @@
     "@prisma/client": "^6.1.0",
     "@scalar/hono-api-reference": "^0.5.165",
     "hono": "^4.6.14",
+    "marked": "^15.0.4",
+    "marked-katex-extension": "^5.1.4",
     "zod": "^3.24.1"
   },
   "devDependencies": {
