@@ -6,6 +6,7 @@ import { parseMarkdown } from "../utils/string"
 
 const factory = createFactory()
 
+//GET /api/tests
 export const getTests = factory.createHandlers(async (c) => {
   try {
     const tests = await prisma.question_packs.findMany({
@@ -28,7 +29,7 @@ export const getTests = factory.createHandlers(async (c) => {
       return {
         id: test.public_id,
         code: test.code,
-        description: test.description,
+        description: parseMarkdown(test.description),
         isActive: test.is_active,
         isMultiTier: test.is_multi_tier,
         type: test.type,
@@ -43,11 +44,12 @@ export const getTests = factory.createHandlers(async (c) => {
   }
 })
 
+//GET /api/test/:id
 export const getTest = factory.createHandlers(
   zValidator(
     "param",
     z.object({
-      id: z.coerce.number(),
+      id: z.string(),
     })
   ),
   async (c) => {
@@ -56,9 +58,6 @@ export const getTest = factory.createHandlers(
       const test = await prisma.question_packs.findFirst({
         where: {
           OR: [
-            {
-              id: Number(id),
-            },
             {
               public_id: id,
             },

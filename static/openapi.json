@@ -62,7 +62,7 @@
           }
         }
       },
-      "/api/tests/{id}": {
+      "/api/test/{id}": {
         "get": {
           "summary": "Get test by ID",
           "operationId": "getTest",
