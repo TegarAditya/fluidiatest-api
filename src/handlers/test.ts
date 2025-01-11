@@ -106,7 +106,7 @@ export const getTest = factory.createHandlers(
       const result = {
         id: test.public_id,
         code: test.code,
-        description: test.description,
+        description: parseMarkdown(test.description),
         isActive: test.is_active,
         isMultiTier: test.is_multi_tier,
         type: test.type,
