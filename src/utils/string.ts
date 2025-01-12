@@ -1,5 +1,4 @@
-import { marked } from "marked"
-import markedKatex from "marked-katex-extension"
+import mdParser from "../plugins/marked"
 
 /**
  * Parses a given markdown string and converts it to HTML using the marked and markedKatex libraries.
@@ -8,7 +7,5 @@ import markedKatex from "marked-katex-extension"
  * @returns The parsed HTML string.
  */
 export const parseMarkdown = (markdown: string) => {
-  const parser = marked.use(markedKatex())
-
-  return parser.parse(markdown)
+  return mdParser(markdown)
 }
