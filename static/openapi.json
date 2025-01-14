@@ -1,88 +1,126 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-      "title": "Fluidiatests API Reference",
-      "version": "1.0.0",
-      "description": "API for retrieving test details and related questions."
-    },
-    "paths": {
-      "/api/tests": {
-        "get": {
-          "summary": "Get all tests",
-          "operationId": "getTests",
-          "responses": {
-            "200": {
-              "description": "A list of tests",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "string" },
-                        "code": { "type": "string" },
-                        "description": { "type": "string" },
-                        "isActive": { "type": "boolean" },
-                        "isMultiTier": { "type": "boolean" },
-                        "type": { "type": "string" },
-                        "duration": { "type": "integer", "format": "int64" }
-                      }
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Fluidiatests API Reference",
+    "version": "1.0.0",
+    "description": "API for retrieving test details and related questions."
+  },
+  "paths": {
+    "/api/users": {
+      "get": {
+        "summary": "Get all users",
+        "operationId": "getUsers",
+        "responses": {
+          "200": {
+            "description": "A list of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "public_id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "email": { "type": "string" },
+                      "school": { "type": "string" }
                     }
                   }
                 }
               }
-            },
-            "404": {
-              "description": "No tests found",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "message": { "type": "string" }
-                    }
-                  }
-                }
-              }
-            },
-            "500": {
-              "description": "Server error",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "message": { "type": "string" }
-                    }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
                   }
                 }
               }
             }
           }
         }
-      },
-      "/api/test/{id}": {
-        "get": {
-          "summary": "Get test by ID",
-          "operationId": "getTest",
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              },
-              "description": "The ID or public ID of the test"
+      }
+    },
+    "/api/user/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID or public ID of user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details of user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "public_id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string" },
+                    "school": { "type": "string" }
+                  }
+                }
+              }
             }
-          ],
-          "responses": {
-            "200": {
-              "description": "Details of the test",
-              "content": {
-                "application/json": {
-                  "schema": {
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tests": {
+      "get": {
+        "summary": "Get all tests",
+        "operationId": "getTests",
+        "responses": {
+          "200": {
+            "description": "A list of tests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
                     "type": "object",
                     "properties": {
                       "id": { "type": "string" },
@@ -91,34 +129,98 @@
                       "isActive": { "type": "boolean" },
                       "isMultiTier": { "type": "boolean" },
                       "type": { "type": "string" },
-                      "duration": { "type": "integer", "format": "int64" },
-                      "questions": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "id": { "type": "integer" },
-                            "question": { "type": "string" },
-                            "options": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "id": { "type": "integer" },
-                                  "label": { "type": "string" },
-                                  "option": { "type": "string" }
-                                }
+                      "duration": { "type": "integer", "format": "int64" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No tests found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test/{id}": {
+      "get": {
+        "summary": "Get test by ID",
+        "operationId": "getTest",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID or public ID of the test"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details of the test",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "code": { "type": "string" },
+                    "description": { "type": "string" },
+                    "isActive": { "type": "boolean" },
+                    "isMultiTier": { "type": "boolean" },
+                    "type": { "type": "string" },
+                    "duration": { "type": "integer", "format": "int64" },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "question": { "type": "string" },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": { "type": "integer" },
+                                "label": { "type": "string" },
+                                "option": { "type": "string" }
                               }
-                            },
-                            "reasons": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "id": { "type": "integer" },
-                                  "label": { "type": "string" },
-                                  "reason": { "type": "string" }
-                                }
+                            }
+                          },
+                          "reasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": { "type": "integer" },
+                                "label": { "type": "string" },
+                                "reason": { "type": "string" }
                               }
                             }
                           }
@@ -128,29 +230,29 @@
                   }
                 }
               }
-            },
-            "404": {
-              "description": "Test not found",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "message": { "type": "string" }
-                    }
+            }
+          },
+          "404": {
+            "description": "Test not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
                   }
                 }
               }
-            },
-            "500": {
-              "description": "Server error",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "message": { "type": "string" }
-                    }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
                   }
                 }
               }
@@ -160,4 +262,4 @@
       }
     }
   }
-  
+}
