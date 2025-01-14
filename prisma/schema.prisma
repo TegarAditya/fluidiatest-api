@@ -157,6 +157,7 @@ model question_options {
 }
 
 model question_pack_question_banks {
+  id               BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
   question_pack_id BigInt         @db.UnsignedBigInt
   question_bank_id BigInt         @db.UnsignedBigInt
   created_at       DateTime?      @db.Timestamp(0)
@@ -165,14 +166,13 @@ model question_pack_question_banks {
   question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_pack_question_banks_question_bank_id_foreign")
   question_packs   question_packs @relation(fields: [question_pack_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_pack_question_banks_question_pack_id_foreign")
 
-  @@id([question_pack_id, question_bank_id])
   @@index([question_bank_id], map: "question_pack_question_banks_question_bank_id_foreign")
   @@index([question_pack_id], map: "question_pack_question_banks_question_pack_id_foreign")
 }
 
 model question_packs {
   id                           BigInt                         @id @default(autoincrement()) @db.UnsignedBigInt
-  public_id                    String                         @db.VarChar(255)
+  public_id                    String?                        @unique(map: "question_packs_public_id_unique") @db.VarChar(255)
   code                         String                         @unique(map: "question_packs_code_unique") @db.VarChar(255)
   description                  String                         @db.Text
   is_active                    Boolean                        @default(false)
@@ -245,4 +245,46 @@ model users {
   updated_at        DateTime? @db.Timestamp(0)
   theme             String?   @default("default") @db.VarChar(255)
   theme_color       String?   @db.VarChar(255)
+  school_id         BigInt?   @db.UnsignedBigInt
+  schools           schools?  @relation(fields: [school_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_school_id_foreign")
+
+  @@index([school_id], map: "users_school_id_foreign")
+}
+
+model learning_goals {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name          String    @db.VarChar(255)
+  learning_goal String    @db.Text
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+  deleted_at    DateTime? @db.Timestamp(0)
+}
+
+model learning_materials {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  title       String    @db.VarChar(255)
+  description String    @db.Text
+  attachment  String    @db.VarChar(255)
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+  deleted_at  DateTime? @db.Timestamp(0)
+}
+
+model learning_outcomes {
+  id               BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  learning_outcome String    @db.Text
+  created_at       DateTime? @db.Timestamp(0)
+  updated_at       DateTime? @db.Timestamp(0)
+  deleted_at       DateTime? @db.Timestamp(0)
+}
+
+model schools {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  code       String    @db.VarChar(255)
+  name       String    @db.VarChar(255)
+  address    String?   @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  deleted_at DateTime? @db.Timestamp(0)
+  users      users[]
 }
