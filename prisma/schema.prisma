@@ -182,6 +182,7 @@ model question_packs {
   deleted_at                   DateTime?                      @db.Timestamp(0)
   type                         String?                        @db.VarChar(255)
   duration                     DateTime?                      @db.Time(0)
+  exam_attempts                exam_attempts[]
   question_pack_question_banks question_pack_question_banks[]
 }
 
@@ -234,19 +235,22 @@ model sessions {
 }
 
 model users {
-  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  public_id         String?   @db.VarChar(255)
-  name              String    @db.VarChar(255)
-  email             String    @unique(map: "users_email_unique") @db.VarChar(255)
-  email_verified_at DateTime? @db.Timestamp(0)
-  password          String    @db.VarChar(255)
-  remember_token    String?   @db.VarChar(100)
-  created_at        DateTime? @db.Timestamp(0)
-  updated_at        DateTime? @db.Timestamp(0)
-  theme             String?   @default("default") @db.VarChar(255)
-  theme_color       String?   @db.VarChar(255)
-  school_id         BigInt?   @db.UnsignedBigInt
-  schools           schools?  @relation(fields: [school_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_school_id_foreign")
+  id                BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  public_id         String?         @db.VarChar(255)
+  name              String          @db.VarChar(255)
+  email             String          @unique(map: "users_email_unique") @db.VarChar(255)
+  email_verified_at DateTime?       @db.Timestamp(0)
+  password          String          @db.VarChar(255)
+  remember_token    String?         @db.VarChar(100)
+  created_at        DateTime?       @db.Timestamp(0)
+  updated_at        DateTime?       @db.Timestamp(0)
+  theme             String?         @default("default") @db.VarChar(255)
+  theme_color       String?         @db.VarChar(255)
+  school_id         BigInt?         @db.UnsignedBigInt
+  exam_attempts     exam_attempts[]
+  exports           exports[]
+  imports           imports[]
+  schools           schools?        @relation(fields: [school_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_school_id_foreign")
 
   @@index([school_id], map: "users_school_id_foreign")
 }
@@ -287,4 +291,95 @@ model schools {
   updated_at DateTime? @db.Timestamp(0)
   deleted_at DateTime? @db.Timestamp(0)
   users      users[]
+}
+
+model exam_attempts {
+  id               BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id          BigInt           @db.UnsignedBigInt
+  question_pack_id BigInt           @db.UnsignedBigInt
+  attempt_id       String           @unique(map: "exam_attempts_attempt_id_unique") @db.VarChar(255)
+  created_at       DateTime?        @db.Timestamp(0)
+  updated_at       DateTime?        @db.Timestamp(0)
+  deleted_at       DateTime?        @db.Timestamp(0)
+  question_packs   question_packs   @relation(fields: [question_pack_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_attempts_question_pack_id_foreign")
+  users            users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_attempts_user_id_foreign")
+  exam_responses   exam_responses[]
+
+  @@index([question_pack_id], map: "exam_attempts_question_pack_id_foreign")
+  @@index([user_id], map: "exam_attempts_user_id_foreign")
+}
+
+model exam_responses {
+  id                 BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  exam_attempt_id    BigInt        @db.UnsignedBigInt
+  question_bank_id   BigInt        @db.UnsignedBigInt
+  question_option_id BigInt?       @db.UnsignedBigInt
+  reason_id          BigInt?       @db.UnsignedBigInt
+  created_at         DateTime?     @db.Timestamp(0)
+  updated_at         DateTime?     @db.Timestamp(0)
+  exam_attempts      exam_attempts @relation(fields: [exam_attempt_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_responses_exam_attempt_id_foreign")
+
+  @@index([exam_attempt_id], map: "exam_responses_exam_attempt_id_foreign")
+}
+
+model exports {
+  id              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  completed_at    DateTime? @db.Timestamp(0)
+  file_disk       String    @db.VarChar(255)
+  file_name       String?   @db.VarChar(255)
+  exporter        String    @db.VarChar(255)
+  processed_rows  Int       @default(0) @db.UnsignedInt
+  total_rows      Int       @db.UnsignedInt
+  successful_rows Int       @default(0) @db.UnsignedInt
+  user_id         BigInt    @db.UnsignedBigInt
+  created_at      DateTime? @db.Timestamp(0)
+  updated_at      DateTime? @db.Timestamp(0)
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exports_user_id_foreign")
+
+  @@index([user_id], map: "exports_user_id_foreign")
+}
+
+model failed_import_rows {
+  id               BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  data             String    @db.LongText
+  import_id        BigInt    @db.UnsignedBigInt
+  validation_error String?   @db.Text
+  created_at       DateTime? @db.Timestamp(0)
+  updated_at       DateTime? @db.Timestamp(0)
+  imports          imports   @relation(fields: [import_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "failed_import_rows_import_id_foreign")
+
+  @@index([import_id], map: "failed_import_rows_import_id_foreign")
+}
+
+model imports {
+  id                 BigInt               @id @default(autoincrement()) @db.UnsignedBigInt
+  completed_at       DateTime?            @db.Timestamp(0)
+  file_name          String               @db.VarChar(255)
+  file_path          String               @db.VarChar(255)
+  importer           String               @db.VarChar(255)
+  processed_rows     Int                  @default(0) @db.UnsignedInt
+  total_rows         Int                  @db.UnsignedInt
+  successful_rows    Int                  @default(0) @db.UnsignedInt
+  user_id            BigInt               @db.UnsignedBigInt
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  failed_import_rows failed_import_rows[]
+  users              users                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "imports_user_id_foreign")
+
+  @@index([user_id], map: "imports_user_id_foreign")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model notifications {
+  id              Unsupported("uuid") @id
+  type            String              @db.VarChar(255)
+  notifiable_type String              @db.VarChar(255)
+  notifiable_id   BigInt              @db.UnsignedBigInt
+  data            String              @db.Text
+  read_at         DateTime?           @db.Timestamp(0)
+  created_at      DateTime?           @db.Timestamp(0)
+  updated_at      DateTime?           @db.Timestamp(0)
+
+  @@index([notifiable_type, notifiable_id], map: "notifications_notifiable_type_notifiable_id_index")
+  @@ignore
 }

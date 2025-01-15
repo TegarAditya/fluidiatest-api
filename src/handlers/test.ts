@@ -140,3 +140,30 @@ export const getTest = factory.createHandlers(
     }
   }
 )
+
+//POST /api/test/attempt
+export const createAttempt = factory.createHandlers(
+  zValidator(
+    "json",
+    z.object({
+      attempt_id: z.string(),
+      user_id: z.string(),
+      test_id: z.string(),
+    })
+  ),
+  async (c) => {
+    try {
+      const { attempt_id, user_id, test_id } = await c.req.json()
+
+      const createAttempt = prisma.exam_attempts.create({
+        data: {
+          attempt_id,
+          user_id,
+          question_pack_id: test_id,
+        },
+      })
+    } catch (error) {}
+  }
+)
+
+//PUT /api/test/attempt/:id/answer
