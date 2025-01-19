@@ -3,6 +3,8 @@ import { z } from "zod"
 import { createFactory } from "hono/factory"
 import prisma from "../libs/prisma"
 import { parseMarkdown } from "../utils/string"
+import cuid2 = require("@paralleldrive/cuid2")
+import { Prisma } from "@prisma/client"
 
 const factory = createFactory()
 
@@ -146,24 +148,84 @@ export const createAttempt = factory.createHandlers(
   zValidator(
     "json",
     z.object({
-      attempt_id: z.string(),
-      user_id: z.string(),
-      test_id: z.string(),
+      userId: z.string(),
+      testId: z.string(),
+      createdAt: z.coerce.date(),
+      answers: z.array(
+        z.object({
+          questionId: z.number(),
+          optionId: z.number(),
+          reasonId: z.number(),
+        })
+      ),
     })
   ),
   async (c) => {
     try {
-      const { attempt_id, user_id, test_id } = await c.req.json()
+      const { userId, testId, createdAt, answers } = await c.req.json()
 
-      const createAttempt = prisma.exam_attempts.create({
-        data: {
-          attempt_id,
-          user_id,
-          question_pack_id: test_id,
+      const user = await prisma.users.findFirst({
+        where: {
+          public_id: userId,
+        },
+        select: {
+          id: true,
         },
       })
-    } catch (error) {}
+
+      if (!user) {
+        return c.json({ message: "User not found" }, 404)
+      }
+
+      const test = await prisma.question_packs.findFirst({
+        where: {
+          public_id: testId,
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      if (!test) {
+        return c.json({ message: "Test not found" }, 404)
+      }
+
+      const attempt_id = `${userId}-${testId}-${cuid2.createId()}`
+
+      const storeAttempt = await prisma.exam_attempts.create({
+        data: {
+          attempt_id,
+          user_id: user.id,
+          question_pack_id: test.id,
+          created_at: createdAt || new Date(),
+          updated_at: new Date(),
+          exam_responses: {
+            createMany: {
+              data: answers.map(
+                (answer: any): Prisma.exam_responsesCreateWithoutExam_attemptsInput => {
+                  return {
+                    question_bank_id: answer.questionId,
+                    question_option_id: answer.optionId,
+                    reason_id: answer.reasonId,
+                    created_at: createdAt || new Date(),
+                    updated_at: new Date(),
+                  }
+                }
+              ) as Prisma.exam_responsesCreateManyInput,
+              skipDuplicates: true,
+            },
+          },
+        },
+      })
+
+      if (!storeAttempt) {
+        return c.json({ message: "Attempt not created" }, 400)
+      }
+
+      return c.json({ message: "Attempt created" }, 201)
+    } catch (error) {
+      console.error(error)
+      return c.json({ message: "Something went wrong" }, 500)
+    }
   }
 )
-
-//PUT /api/test/attempt/:id/answer
