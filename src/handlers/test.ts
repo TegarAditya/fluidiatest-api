@@ -113,26 +113,29 @@ export const getTest = factory.createHandlers(
         isMultiTier: test.is_multi_tier,
         type: test.type,
         duration: test.duration?.getTime(),
-        questions: test.question_pack_question_banks.map((question) => {
-          return {
-            id: Number(question.question_banks.id),
-            question: parseMarkdown(question.question_banks.question),
-            options: question.question_banks.question_options.map((option) => {
-              return {
-                id: Number(option.id),
-                label: option.label,
-                option: parseMarkdown(option.option),
-              }
-            }),
-            reasons: question.question_banks.reasons.map((reason) => {
-              return {
-                id: Number(reason.id),
-                label: reason.label,
-                reason: parseMarkdown(reason.reason),
-              }
-            }),
-          }
-        }),
+        questions: test.question_pack_question_banks
+          .map((question) => {
+            return {
+              id: Number(question.question_banks.id),
+              code: question.question_banks.code,
+              question: parseMarkdown(question.question_banks.question),
+              options: question.question_banks.question_options.map((option) => {
+                return {
+                  id: Number(option.id),
+                  label: option.label,
+                  option: parseMarkdown(option.option),
+                }
+              }),
+              reasons: question.question_banks.reasons.map((reason) => {
+                return {
+                  id: Number(reason.id),
+                  label: reason.label,
+                  reason: parseMarkdown(reason.reason),
+                }
+              }),
+            }
+          })
+          .sort((a, b) => parseInt(a.code) - parseInt(b.code)),
       }
 
       return c.json(result, 200)
