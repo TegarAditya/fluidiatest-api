@@ -230,12 +230,12 @@ export const getTestResults = factory.createHandlers(async (c) => {
             reasonLabel: response.reason?.label,
             reasonCorrect: response.reason?.is_correct,
             points: countPoints(response.question_option?.is_correct, response.reason?.is_correct),
-            feedback: response.question_bank.question_feedback.filter((feedback) => {
+            feedback: (response.question_bank.question_feedback.filter((feedback) => {
               return (
                 feedback.score ===
                 countPoints(response.question_option?.is_correct, response.reason?.is_correct)
               )
-            })[0].feedback,
+            })[0]?.feedback) || "",
           }
         }),
       }
