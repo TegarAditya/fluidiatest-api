@@ -5,6 +5,13 @@ import prisma from "../libs/prisma"
 import { parseMarkdown } from "../utils/string"
 import cuid2 = require("@paralleldrive/cuid2")
 import { Prisma } from "@prisma/client"
+import { countPoints } from "../utils/result"
+
+interface Answer {
+  questionId: number
+  optionId: number
+  reasonId: number
+}
 
 const factory = createFactory()
 
@@ -146,6 +153,101 @@ export const getTest = factory.createHandlers(
   }
 )
 
+//GET /api/test/results
+export const getTestResults = factory.createHandlers(async (c) => {
+  try {
+    const results = await prisma.exam_attempts.findMany({
+      select: {
+        attempt_id: true,
+        created_at: true,
+        updated_at: true,
+        users: {
+          select: {
+            public_id: true,
+            name: true,
+            schools: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        exam_responses: {
+          select: {
+            question_bank: {
+              select: {
+                id: true,
+                code: true,
+                question_feedback: {
+                  select: {
+                    score: true,
+                    feedback: true,
+                  },
+                },
+              },
+            },
+            question_option: {
+              select: {
+                id: true,
+                label: true,
+                is_correct: true,
+              },
+            },
+            reason: {
+              select: {
+                id: true,
+                label: true,
+                is_correct: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (results.length <= 0) {
+      return c.json({ message: "No results found" }, 404)
+    }
+
+    const data = results.map((result) => {
+      return {
+        id: Number(result.attempt_id),
+        createdAt: result.created_at,
+        updatedAt: result.updated_at,
+        user: {
+          id: Number(result.users.public_id),
+          name: result.users.name,
+          schools: result.users.schools?.name,
+        },
+        responses: result.exam_responses.map((response) => {
+          return {
+            questionId: Number(response.question_bank.id),
+            questionCode: response.question_bank.code,
+            optionId: Number(response.question_option?.id),
+            optionLabel: response.question_option?.label,
+            optionCorrect: response.question_option?.is_correct,
+            reasonId: Number(response.reason?.id),
+            reasonLabel: response.reason?.label,
+            reasonCorrect: response.reason?.is_correct,
+            points: countPoints(response.question_option?.is_correct, response.reason?.is_correct),
+            feedback: response.question_bank.question_feedback.filter((feedback) => {
+              return (
+                feedback.score ===
+                countPoints(response.question_option?.is_correct, response.reason?.is_correct)
+              )
+            })[0].feedback,
+          }
+        }),
+      }
+    })
+
+    return c.json(data, 200)
+  } catch (error) {
+    console.error(error)
+    return c.json({ message: "Something went wrong" }, 500)
+  }
+})
+
 //POST /api/test/attempt
 export const createAttempt = factory.createHandlers(
   zValidator(
@@ -205,11 +307,23 @@ export const createAttempt = factory.createHandlers(
           exam_responses: {
             createMany: {
               data: answers.map(
-                (answer: any): Prisma.exam_responsesCreateWithoutExam_attemptsInput => {
+                (answer: Answer): Prisma.exam_responsesCreateWithoutExam_attemptsInput => {
                   return {
-                    question_bank_id: answer.questionId,
-                    question_option_id: answer.optionId,
-                    reason_id: answer.reasonId,
+                    question_bank: {
+                      connect: {
+                        id: answer.questionId,
+                      },
+                    },
+                    question_option: {
+                      connect: {
+                        id: answer.optionId,
+                      },
+                    },
+                    reason: {
+                      connect: {
+                        id: answer.reasonId,
+                      },
+                    },
                     created_at: createdAt || new Date(),
                     updated_at: new Date(),
                   }

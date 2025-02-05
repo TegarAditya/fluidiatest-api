@@ -127,6 +127,7 @@ model question_banks {
   question_options             question_options[]
   question_pack_question_banks question_pack_question_banks[]
   reasons                      reasons[]
+  exam_responses               exam_responses[]
 }
 
 model question_feedback {
@@ -143,15 +144,16 @@ model question_feedback {
 }
 
 model question_options {
-  id               BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
-  question_bank_id BigInt         @db.UnsignedBigInt
-  label            String         @db.VarChar(255)
-  option           String         @db.Text
-  is_correct       Boolean        @default(false)
-  created_at       DateTime?      @db.Timestamp(0)
-  updated_at       DateTime?      @db.Timestamp(0)
-  deleted_at       DateTime?      @db.Timestamp(0)
-  question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_options_question_bank_id_foreign")
+  id               BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  question_bank_id BigInt           @db.UnsignedBigInt
+  label            String           @db.VarChar(255)
+  option           String           @db.Text
+  is_correct       Boolean          @default(false)
+  created_at       DateTime?        @db.Timestamp(0)
+  updated_at       DateTime?        @db.Timestamp(0)
+  deleted_at       DateTime?        @db.Timestamp(0)
+  question_banks   question_banks   @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "question_options_question_bank_id_foreign")
+  exam_responses   exam_responses[]
 
   @@index([question_bank_id], map: "question_options_question_bank_id_foreign")
 }
@@ -187,15 +189,16 @@ model question_packs {
 }
 
 model reasons {
-  id               BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
-  question_bank_id BigInt         @db.UnsignedBigInt
-  label            String         @db.VarChar(255)
-  reason           String         @db.Text
-  is_correct       Boolean        @default(false)
-  created_at       DateTime?      @db.Timestamp(0)
-  updated_at       DateTime?      @db.Timestamp(0)
-  deleted_at       DateTime?      @db.Timestamp(0)
-  question_banks   question_banks @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "reasons_question_bank_id_foreign")
+  id               BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  question_bank_id BigInt           @db.UnsignedBigInt
+  label            String           @db.VarChar(255)
+  reason           String           @db.Text
+  is_correct       Boolean          @default(false)
+  created_at       DateTime?        @db.Timestamp(0)
+  updated_at       DateTime?        @db.Timestamp(0)
+  deleted_at       DateTime?        @db.Timestamp(0)
+  question_banks   question_banks   @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "reasons_question_bank_id_foreign")
+  exam_responses   exam_responses[]
 
   @@index([question_bank_id], map: "reasons_question_bank_id_foreign")
 }
@@ -310,14 +313,17 @@ model exam_attempts {
 }
 
 model exam_responses {
-  id                 BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
-  exam_attempt_id    BigInt        @db.UnsignedBigInt
-  question_bank_id   BigInt        @db.UnsignedBigInt
-  question_option_id BigInt?       @db.UnsignedBigInt
-  reason_id          BigInt?       @db.UnsignedBigInt
-  created_at         DateTime?     @db.Timestamp(0)
-  updated_at         DateTime?     @db.Timestamp(0)
-  exam_attempts      exam_attempts @relation(fields: [exam_attempt_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_responses_exam_attempt_id_foreign")
+  id                 BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  exam_attempt_id    BigInt            @db.UnsignedBigInt
+  question_bank_id   BigInt            @db.UnsignedBigInt
+  question_option_id BigInt?           @db.UnsignedBigInt
+  reason_id          BigInt?           @db.UnsignedBigInt
+  created_at         DateTime?         @db.Timestamp(0)
+  updated_at         DateTime?         @db.Timestamp(0)
+  exam_attempts      exam_attempts     @relation(fields: [exam_attempt_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_responses_exam_attempt_id_foreign")
+  question_bank      question_banks    @relation(fields: [question_bank_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_responses_question_bank_id_foreign")
+  question_option    question_options? @relation(fields: [question_option_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_responses_question_option_id_foreign")
+  reason             reasons?          @relation(fields: [reason_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "exam_responses_reason_id_foreign")
 
   @@index([exam_attempt_id], map: "exam_responses_exam_attempt_id_foreign")
 }
