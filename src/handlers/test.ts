@@ -53,6 +53,59 @@ export const getTests = factory.createHandlers(async (c) => {
   }
 })
 
+//GET /api/test/:id/questions
+export const getTestQuestionList = factory.createHandlers(
+  zValidator(
+    "param",
+    z.object({
+      id: z.string(),
+    })
+  ),
+  async (c) => {
+    try {
+      const id = c.req.param("id")
+      const test = await prisma.question_packs.findFirst({
+        where: {
+          OR: [
+            {
+              public_id: id,
+            },
+          ],
+        },
+        select: {
+          question_pack_question_banks: {
+            select: {
+              question_banks: {
+                select: {
+                  id: true,
+                  code: true,
+                },
+              },
+            },
+          },
+        },
+      })
+
+      if (!test) {
+        return c.json({ message: "Test not found" }, 404)
+      }
+
+      const result = test.question_pack_question_banks.map((question, index) => {
+        return {
+          id: Number(question.question_banks.id),
+          code: question.question_banks.code,
+          index: index + 1,
+        }
+      })
+
+      return c.json(result, 200)
+    } catch (error) {
+      console.error(error)
+      return c.json({ message: "Something went wrong" }, 500)
+    }
+  }
+)
+
 //GET /api/test/:id
 export const getTest = factory.createHandlers(
   zValidator(
@@ -120,29 +173,27 @@ export const getTest = factory.createHandlers(
         isMultiTier: test.is_multi_tier,
         type: test.type,
         duration: test.duration?.getTime(),
-        questions: test.question_pack_question_banks
-          .map((question) => {
-            return {
-              id: Number(question.question_banks.id),
-              code: question.question_banks.code,
-              question: parseMarkdown(question.question_banks.question),
-              options: question.question_banks.question_options.map((option) => {
-                return {
-                  id: Number(option.id),
-                  label: option.label,
-                  option: parseMarkdown(option.option),
-                }
-              }),
-              reasons: question.question_banks.reasons.map((reason) => {
-                return {
-                  id: Number(reason.id),
-                  label: reason.label,
-                  reason: parseMarkdown(reason.reason),
-                }
-              }),
-            }
-          })
-          .sort((a, b) => parseInt(a.code) - parseInt(b.code)),
+        questions: test.question_pack_question_banks.map((question) => {
+          return {
+            id: Number(question.question_banks.id),
+            code: question.question_banks.code,
+            question: parseMarkdown(question.question_banks.question),
+            options: question.question_banks.question_options.map((option) => {
+              return {
+                id: Number(option.id),
+                label: option.label,
+                option: parseMarkdown(option.option),
+              }
+            }),
+            reasons: question.question_banks.reasons.map((reason) => {
+              return {
+                id: Number(reason.id),
+                label: reason.label,
+                reason: parseMarkdown(reason.reason),
+              }
+            }),
+          }
+        }),
       }
 
       return c.json(result, 200)
@@ -230,12 +281,13 @@ export const getTestResults = factory.createHandlers(async (c) => {
             reasonLabel: response.reason?.label,
             reasonCorrect: response.reason?.is_correct,
             points: countPoints(response.question_option?.is_correct, response.reason?.is_correct),
-            feedback: (response.question_bank.question_feedback.filter((feedback) => {
-              return (
-                feedback.score ===
-                countPoints(response.question_option?.is_correct, response.reason?.is_correct)
-              )
-            })[0]?.feedback) || "",
+            feedback:
+              response.question_bank.question_feedback.filter((feedback) => {
+                return (
+                  feedback.score ===
+                  countPoints(response.question_option?.is_correct, response.reason?.is_correct)
+                )
+              })[0]?.feedback || "",
           }
         }),
       }
@@ -258,9 +310,9 @@ export const createAttempt = factory.createHandlers(
       createdAt: z.coerce.date(),
       answers: z.array(
         z.object({
-          questionId: z.number(),
-          optionId: z.number(),
-          reasonId: z.number(),
+          questionId: z.number().nullable().optional(),
+          optionId: z.number().nullable().optional(),
+          reasonId: z.number().nullable().optional(),
         })
       ),
     })
@@ -295,48 +347,48 @@ export const createAttempt = factory.createHandlers(
         return c.json({ message: "Test not found" }, 404)
       }
 
-      const attempt_id = `${userId}-${testId}-${cuid2.createId()}`
-
-      const storeAttempt = await prisma.exam_attempts.create({
-        data: {
-          attempt_id,
+      const existingAttempt = await prisma.exam_attempts.findFirst({
+        where: {
           user_id: user.id,
           question_pack_id: test.id,
-          created_at: createdAt || new Date(),
-          updated_at: new Date(),
-          exam_responses: {
-            createMany: {
-              data: answers.map(
-                (answer: Answer): Prisma.exam_responsesCreateWithoutExam_attemptsInput => {
-                  return {
-                    question_bank: {
-                      connect: {
-                        id: answer.questionId,
-                      },
-                    },
-                    question_option: {
-                      connect: {
-                        id: answer.optionId,
-                      },
-                    },
-                    reason: {
-                      connect: {
-                        id: answer.reasonId,
-                      },
-                    },
-                    created_at: createdAt || new Date(),
-                    updated_at: new Date(),
-                  }
-                }
-              ) as Prisma.exam_responsesCreateManyInput,
-              skipDuplicates: true,
-            },
-          },
         },
       })
 
-      if (!storeAttempt) {
-        return c.json({ message: "Attempt not created" }, 400)
+      if (existingAttempt) {
+        return c.json({ message: "Attempt already exists" }, 409)
+      }
+
+      const attempt_id = `${userId}-${testId}-${cuid2.createId()}`
+
+      let storeAttempt
+
+      try {
+        storeAttempt = await prisma.exam_attempts.create({
+          data: {
+            attempt_id,
+            user_id: user.id,
+            question_pack_id: test.id,
+            created_at: createdAt || new Date(),
+            updated_at: new Date(),
+            exam_responses: {
+              createMany: {
+                data: answers.map((answer: Answer) => {
+                  return {
+                    question_bank_id: answer.questionId,
+                    question_option_id: answer.optionId,
+                    reason_id: answer.reasonId,
+                    created_at: createdAt || new Date(),
+                    updated_at: new Date(),
+                  }
+                }) as Prisma.exam_responsesCreateManyInput,
+                skipDuplicates: true,
+              },
+            },
+          },
+        })
+      } catch (error) {
+        console.log(error)
+        throw error
       }
 
       return c.json({ message: "Attempt created" }, 201)
