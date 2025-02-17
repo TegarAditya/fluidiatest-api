@@ -5,6 +5,7 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.2",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.1.0",
     "@scalar/hono-api-reference": "^0.5.165",
     "hono": "^4.6.14",
