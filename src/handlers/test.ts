@@ -165,6 +165,10 @@ export const getTest = factory.createHandlers(
         return c.json({ message: "Test not found" }, 404)
       }
 
+      if (!test.is_active) {
+        return c.json({ message: "Test is not active" }, 403)
+      }
+
       const result = {
         id: test.public_id,
         code: test.code,

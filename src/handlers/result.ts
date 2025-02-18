@@ -120,19 +120,47 @@ export const getResults = factory.createHandlers(async (c) => {
 export const getResult = factory.createHandlers(
   zValidator(
     "query",
-    z.object({
-      user_id: z.string(),
-      exam_id: z.string(),
-    })
+    z
+      .object({
+        user_id: z.string().optional(),
+        exam_id: z.string().optional(),
+        attempt_id: z.string().optional(),
+      })
+      .refine(
+        (data) => {
+          if (data.attempt_id) {
+            return true
+          } else {
+            return data.user_id !== undefined && data.exam_id !== undefined
+          }
+        },
+        {
+          message: "If attempt_id is not provided, both user_id and exam_id must be provided.",
+        }
+      )
   ),
   async (c) => {
     const userId = c.req.query("user_id")
     const examId = c.req.query("exam_id")
+    const attemptId = c.req.query("attempt_id")
 
     try {
+      const attempt = await prisma.exam_attempts.findFirst({
+        where: {
+          attempt_id: attemptId,
+        },
+      })
+
       const user = await prisma.users.findFirst({
         where: {
-          public_id: userId,
+          OR: [
+            {
+              public_id: userId,
+            },
+            {
+              id: attempt?.user_id,
+            },
+          ],
         },
       })
 
@@ -145,6 +173,9 @@ export const getResult = factory.createHandlers(
           OR: [
             {
               public_id: examId,
+            },
+            {
+              id: attempt?.question_pack_id,
             },
           ],
         },
@@ -313,6 +344,11 @@ export const getResult = factory.createHandlers(
         return (
           (questionIndexMap.get(a.questionCode) ?? 0) - (questionIndexMap.get(b.questionCode) ?? 0)
         )
+      })
+
+      // Filter out the questionCode from the responses based on the questionList
+      resultData.responses = resultData.responses.filter((response) => {
+        return questionIndexMap.has(response.questionCode)
       })
 
       return c.json(resultData, 200)
