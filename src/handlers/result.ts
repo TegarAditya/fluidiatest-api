@@ -149,18 +149,26 @@ export const getResult = factory.createHandlers(
         where: {
           attempt_id: attemptId,
         },
+        select: {
+          users: {
+            select: {
+              public_id: true,
+            },
+          },
+          question_packs: {
+            select: {
+              public_id: true,
+            },
+          },
+        },
       })
+
+      const userPublicId = userId ? userId : attempt?.users.public_id
+      const examPublicId = examId ? examId : attempt?.question_packs.public_id
 
       const user = await prisma.users.findFirst({
         where: {
-          OR: [
-            {
-              public_id: userId,
-            },
-            {
-              id: attempt?.user_id,
-            },
-          ],
+          public_id: userPublicId,
         },
       })
 
@@ -170,14 +178,7 @@ export const getResult = factory.createHandlers(
 
       const exam = await prisma.question_packs.findFirst({
         where: {
-          OR: [
-            {
-              public_id: examId,
-            },
-            {
-              id: attempt?.question_pack_id,
-            },
-          ],
+          public_id: examPublicId,
         },
         select: {
           question_pack_question_banks: {
@@ -217,10 +218,10 @@ export const getResult = factory.createHandlers(
       const result = await prisma.exam_attempts.findFirst({
         where: {
           users: {
-            public_id: userId,
+            public_id: userPublicId,
           },
           question_packs: {
-            public_id: examId,
+            public_id: examPublicId,
           },
         },
         select: {
