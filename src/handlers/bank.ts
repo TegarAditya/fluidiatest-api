@@ -2,6 +2,7 @@ import { createFactory } from "hono/factory"
 import prisma from "../libs/prisma"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
 
 const factory = createFactory()
 
@@ -17,15 +18,38 @@ export const getBanks = factory.createHandlers(
     try {
       const examId = c.req.query("exam_id")
 
-      if (examId) {
-        
-      }
+      const whereClause: Prisma.question_pack_question_banksWhereInput = {}
 
-      const bank = await prisma.question_banks.findMany({
+      const exam = await prisma.question_packs.findFirst({
+        where: {
+          public_id: examId,
+        },
         select: {
           id: true,
-          code: true,
         },
+      })
+
+      if (!exam) {
+        return c.json({ message: "Exam not found" }, 404)
+      }
+
+      if (examId) {
+        whereClause.question_pack_id = exam.id
+      }
+
+      const bank = await prisma.question_pack_question_banks.findMany({
+        where: {
+          ...whereClause,
+        },
+        select: {
+          question_banks: {
+            select: {
+              id: true,
+              code: true,
+            },
+          },
+        },
+        distinct: "question_bank_id",
       })
 
       if (bank.length <= 0) {
@@ -34,8 +58,8 @@ export const getBanks = factory.createHandlers(
 
       const result = bank.map((b) => {
         return {
-          id: Number(b.id),
-          code: b.code,
+          id: Number(b.question_banks.id),
+          code: b.question_banks.code,
         }
       })
 
