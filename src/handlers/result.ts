@@ -32,12 +32,19 @@ export const getResults = factory.createHandlers(async (c) => {
           select: {
             public_id: true,
             name: true,
+            email: true,
             schools: {
               select: {
                 name: true,
               },
             },
           },
+        },
+        question_packs: {
+          select: {
+            code: true,
+            is_multi_tier: true,
+          }
         },
         exam_responses: {
           select: {
@@ -78,12 +85,15 @@ export const getResults = factory.createHandlers(async (c) => {
 
     const data = results.map((result) => {
       return {
-        id: Number(result.attempt_id),
+        id: result.attempt_id,
+        examCode: result.question_packs.code,
+        isMultiTier: result.question_packs.is_multi_tier,
         createdAt: result.created_at,
         updatedAt: result.updated_at,
         user: {
           id: Number(result.users.public_id),
           name: result.users.name,
+          email: result.users.email,
           schools: result.users.schools?.name,
         },
         responses: result.exam_responses.map((response) => {
