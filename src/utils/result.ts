@@ -9,7 +9,11 @@
  * - 2 if optionValue is false or undefined and reasonValue is true.
  * - 1 if both optionValue and reasonValue are false or undefined.
  */
-export const countPoints = (optionValue: boolean | undefined, reasonValue: boolean | undefined) => {
+export const countPoints = (optionValue: boolean | undefined, reasonValue: boolean | undefined, isMultiTier = true) => {
+  if (!isMultiTier) {
+    return optionValue ? 1 : 0
+  }
+
   const resultCode = String(Number(optionValue || false)) + String(Number(reasonValue || false))
 
   switch (resultCode) {
