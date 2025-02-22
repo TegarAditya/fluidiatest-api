@@ -57,6 +57,11 @@ export const getResults = factory.createHandlers(
             select: {
               code: true,
               is_multi_tier: true,
+              question_pack_question_banks: {
+                select: {
+                  question_bank_id: true,
+                },
+              },
             },
           },
           exam_responses: {
@@ -109,29 +114,35 @@ export const getResults = factory.createHandlers(
             email: result.users.email,
             schools: result.users.schools?.name,
           },
-          responses: result.exam_responses.map((response) => {
-            return {
-              questionId: Number(response.question_bank.id),
-              questionCode: response.question_bank.code,
-              optionId: Number(response.question_option?.id),
-              optionLabel: response.question_option?.label,
-              optionCorrect: response.question_option?.is_correct,
-              reasonId: Number(response.reason?.id),
-              reasonLabel: response.reason?.label,
-              reasonCorrect: response.reason?.is_correct,
-              points: countPoints(
-                response.question_option?.is_correct,
-                response.reason?.is_correct
-              ),
-              feedback:
-                response.question_bank.question_feedback.filter((feedback) => {
-                  return (
-                    feedback.score ===
-                    countPoints(response.question_option?.is_correct, response.reason?.is_correct)
-                  )
-                })[0]?.feedback || "",
-            }
-          }),
+          responses: result.exam_responses
+            .filter((response) => {
+              return result.question_packs.question_pack_question_banks.some((question) => {
+                return question.question_bank_id === response.question_bank.id
+              })
+            })
+            .map((response) => {
+              return {
+                questionId: Number(response.question_bank.id),
+                questionCode: response.question_bank.code,
+                optionId: Number(response.question_option?.id),
+                optionLabel: response.question_option?.label,
+                optionCorrect: response.question_option?.is_correct,
+                reasonId: Number(response.reason?.id),
+                reasonLabel: response.reason?.label,
+                reasonCorrect: response.reason?.is_correct,
+                points: countPoints(
+                  response.question_option?.is_correct,
+                  response.reason?.is_correct
+                ),
+                feedback:
+                  response.question_bank.question_feedback.filter((feedback) => {
+                    return (
+                      feedback.score ===
+                      countPoints(response.question_option?.is_correct, response.reason?.is_correct)
+                    )
+                  })[0]?.feedback || "",
+              }
+            }),
         }
       })
 
