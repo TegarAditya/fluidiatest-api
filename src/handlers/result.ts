@@ -132,15 +132,9 @@ export const getResults = factory.createHandlers(
                 reasonCorrect: response.reason?.is_correct,
                 points: countPoints(
                   response.question_option?.is_correct,
-                  response.reason?.is_correct
+                  response.reason?.is_correct,
+                  result.question_packs.is_multi_tier
                 ),
-                feedback:
-                  response.question_bank.question_feedback.filter((feedback) => {
-                    return (
-                      feedback.score ===
-                      countPoints(response.question_option?.is_correct, response.reason?.is_correct)
-                    )
-                  })[0]?.feedback || "",
               }
             }),
         }
