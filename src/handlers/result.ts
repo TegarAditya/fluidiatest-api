@@ -213,6 +213,7 @@ export const getResult = factory.createHandlers(
           public_id: examPublicId,
         },
         select: {
+          is_multi_tier: true,
           question_pack_question_banks: {
             select: {
               question_banks: {
@@ -334,13 +335,13 @@ export const getResult = factory.createHandlers(
                 : null,
             reasonCorrect: response.reason?.is_correct ?? false,
             points: countPoints(response.question_option?.is_correct, response.reason?.is_correct),
-            feedback:
+            feedback: exam.is_multi_tier ?
               response.question_bank.question_feedback.filter((feedback) => {
                 return (
                   feedback.score ===
                   countPoints(response.question_option?.is_correct, response.reason?.is_correct)
                 )
-              })[0]?.feedback || "",
+              })[0]?.feedback || "" : "",
           }
         }),
       }
