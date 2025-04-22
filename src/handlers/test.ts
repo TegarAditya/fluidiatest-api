@@ -1,11 +1,12 @@
 import { zValidator } from "@hono/zod-validator"
-import { z } from "zod"
-import { createFactory } from "hono/factory"
-import prisma from "../libs/prisma"
-import { parseMarkdown } from "../utils/string"
-import cuid2 = require("@paralleldrive/cuid2")
 import { Prisma } from "@prisma/client"
+import { createFactory } from "hono/factory"
+import { z } from "zod"
+import prisma from "../libs/prisma"
 import { countPoints } from "../utils/result"
+import { parseMarkdown } from "../utils/string"
+
+import cuid2 = require("@paralleldrive/cuid2")
 
 interface Answer {
   questionId: number
