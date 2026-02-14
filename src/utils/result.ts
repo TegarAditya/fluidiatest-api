@@ -26,6 +26,4 @@ export const countPoints = (optionValue: boolean | undefined, reasonValue: boole
     default:
       return 1
   }
-
-  return 0
 }
