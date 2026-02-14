@@ -7,21 +7,18 @@ COPY . .
 
 RUN bun install --frozen-lockfile
 
-RUN bunx prisma generate
-
 RUN bun build --compile --minify --bytecode --sourcemap ./src/index.ts --outfile ./dist/compiled/main
 
 # Stage 2
 FROM busybox:uclibc AS wget
 
 # Stage 3
-FROM gcr.io/distroless/cc-debian11 AS runtime
+FROM gcr.io/distroless/cc-debian12 AS runtime
 
 WORKDIR /app
 
 COPY --from=wget /bin/wget /usr/bin/wget
 
-COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
 COPY --from=builder /app/static /app/static
 
 COPY --from=builder /app/dist/compiled/main /app/main
